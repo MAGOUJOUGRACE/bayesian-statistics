@@ -1,0 +1,275 @@
+---
+title: "Untitled"
+output: html_document
+date: "2023-01-26"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(rstan)
+```
+
+## Data loading
+
+```{r}
+mayfly_survival_data = read_csv("mayflies_salt_survival.csv")
+
+mayfly_survival_data
+```
+
+
+## Basic data visualisation
+
+```{r}
+mayfly_survival_data %>% 
+  ggplot() + 
+  theme_bw() + 
+  geom_point(aes(x = conc, y = Nsurv/N0)) +
+  facet_grid(Salt~.) + 
+  scale_x_log10()
+```
+## Fitting a simple model for one Salt
+
+### Generative model
+
+$$
+\begin{align}
+\text{Nsurv}_{\text{conc}} &\sim \text{Binom}(N^0_{\text{conc}}, p^{\text{surv}}_{\text{conc}}) \\
+p^{\text{surv}}_{\text{conc}} & = \frac{1}{1+\left(\frac{\text{conc}}{e}\right)^b}
+\end{align}
+$$
+### Priors
+
+If you use these justify/check that they are reasonable, if you change them justify too !
+
+$$
+\begin{align}
+\log e &\sim \text{Uniform}(\log(1), \log(1000)) \\
+\log b &\sim \text{Student}(\nu = 2, \mu = 0, \sigma = 2)
+\end{align}
+$$
+
+
+
+## a simple model
+```{r}
+first_simple_model_e_b = "
+data {
+  // Number of tanks
+  int n;
+  // Number of survivors after 96h
+  int Nsurv[n];
+  // Initial number of mayfly larvae
+  int N0[n];
+  // Concentration
+  real conc[n];
+}
+
+parameters {
+  real log_e;
+  real log_b;
+}
+
+transformed parameters {
+  real<lower=0> e;
+  real<lower=0> b;
+  e = exp(log_e);
+  b = exp(log_b);
+}
+
+model {  
+  real psurv[n];
+  
+  for (i in 1:n){
+    psurv[i] = 1/(1+(conc[i]/e)^b);
+  }
+
+  log_e ~ uniform(log(1), log(1000));
+  log_b ~ student_t(2, 0, 2);
+  Nsurv ~ binomial(N0, psurv);
+}
+
+"
+
+data_CaCl2 = mayfly_survival_data %>% 
+  filter(Salt == "NaCl") %>% 
+  (function(df){
+    list(n = length(df$conc),
+         Nsurv = df$Nsurv,
+         N0 = df$N0,
+         conc = df$conc)
+  })
+
+
+# Compiling and producing posterior samples from the model.
+stan_samples <- stan(model_code = first_simple_model_e_b, data = data_CaCl2)
+
+data_CaCl2
+```
+
+```{r}
+stan_samples
+```
+
+
+
+
+```{r}
+traceplot(stan_samples)
+```
+
+
+
+
+
+
+# A model to combine them all
+
+```{r}
+first_model = "
+data {
+  int n;
+  int Nsurv[n];
+  int N0[n];
+  real conc[n];
+  int J;
+  int x[n];
+}
+
+parameters {
+  real log_e[J];
+  real log_b[J];
+}
+
+transformed parameters {
+  real<lower=0>  e[J];
+  real<lower=0> b[J];
+  e = exp(log_e);
+  b = exp(log_b);
+}
+
+model {  
+  real psurv[n];
+  
+  for (i in 1:n){
+    psurv[i] = 1/(1+(conc[i]/e[x[i]])^b[x[i]]);
+  }
+
+  log_e ~ uniform(log(1), log(1000));
+  log_b ~ student_t(2, 0, 2);
+  Nsurv ~ binomial(N0, psurv);
+}
+"
+
+data2 = mayfly_survival_data
+data2$ind = 3
+data2$ind[data2$Salt=="NaCl"]=1
+data2$ind[data2$Salt=="CaCl2"]=2
+data2
+```
+
+
+```{r}
+data_all = data2 %>% 
+  (function(df){
+    list(n = length(df$conc),
+         Nsurv = df$Nsurv,
+         N0 = df$N0,
+         conc = df$conc, J=length(unique(df$ind)), x=df$ind)
+  })
+
+data_all
+```
+
+
+```{r}
+stan_all <- stan(model_code = first_model, data = data_all, iter=4000)
+```
+
+```{r}
+plot(stan_all)
+```
+
+```{r}
+stan_all
+```
+
+
+```{r}
+# pdf(file="trace_all.pdf")
+# traceplot(stan_all, pars=c('e', 'b'))
+# dev.off()
+```
+
+#saving the posterior to be used in python for graphing 
+```{r}
+posterior_all = as.data.frame(stan_all)
+#write.csv(file = 'posterior.csv', posterior_all)
+
+```
+
+
+```{r}
+ggplot()+
+  geom_density(aes(x=posterior_all$`e[1]`) ,color='red')+
+  geom_density(aes(x=posterior_all$`e[2]`) ,color='green')+
+  geom_density(aes(x=posterior_all$`e[3]`),color='cyan')+
+  xlab("e")
+  
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+
+
+
+
+```
+
+```{r}
+stan_fake
+```
+
+```{r}
+plot(stan_fake)
+```
+
+
+
+
+
+
+```{r}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
+

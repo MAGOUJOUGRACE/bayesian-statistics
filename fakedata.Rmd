@@ -1,0 +1,241 @@
+
+
+
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(rstan)
+
+mayfly_survival_data = read_csv("mayflies_salt_survival.csv")
+
+mayfly_survival_data
+```
+
+
+
+
+
+
+
+```{r}
+##########Fake Data1#######################################################
+N_ = mayfly_survival_data$N0
+c = mayfly_survival_data$conc
+esim = 20.4
+bsim = 2.01
+p_sim = rep(0, 99)
+Ns = rep(0, 99)
+for (i in 1:99){
+  p_sim[i] = 1/(1+(c[i]/esim)^bsim)
+  Ns[i] = rbinom(n=1, size=N_[i], prob=p_sim[i])
+}
+fakedata = list(n=length(c), Nsurv=Ns, N0=N_, conc=c)
+fakemodel = "
+data {
+  // Number of tanks
+  int n;
+  // Number of survivors after 96h
+  int Nsurv[n];
+  // Initial number of mayfly larvae
+  int N0[n];
+  // Concentration
+  real conc[n];
+}
+
+parameters {
+  real log_e;
+  real log_b;
+}
+
+transformed parameters {
+  real<lower=0> e;
+  real<lower=0> b;
+  e = exp(log_e);
+  b = exp(log_b);
+}
+
+model {  
+  real psurv[n];
+  
+  for (i in 1:n){
+    psurv[i] = 1/(1+(conc[i]/e)^b);
+  }
+
+  log_e ~ uniform(log(1), log(1000));
+  log_b ~ student_t(2, 0, 2);
+  Nsurv ~ binomial(N0, psurv);
+}
+
+"
+stan_fake <- stan(model_code = fakemodel, data = fakedata, iter=4000)
+stan_fake
+pos_fake = as.data.frame(stan_fake)
+#write.csv(file = 'postfake1.csv', pos_fake)
+
+
+#######Fake Data 2###########################################
+N_ = mayfly_survival_data$N0
+c = mayfly_survival_data$conc
+esim = 8.78
+bsim = 4.47
+p_sim = rep(0, 99)
+Ns = rep(0, 99)
+for (i in 1:99){
+  p_sim[i] = 1/(1+(c[i]/esim)^bsim)
+  Ns[i] = rbinom(n=1, size=N_[i], prob=p_sim[i])
+  
+}
+fakedata = list(n=length(c), Nsurv=Ns, N0=N_, conc=c)
+fakemodel = "
+data {
+  // Number of tanks
+  int n;
+  // Number of survivors after 96h
+  int Nsurv[n];
+  // Initial number of mayfly larvae
+  int N0[n];
+  // Concentration
+  real conc[n];
+}
+
+parameters {
+  real log_e;
+  real log_b;
+}
+
+transformed parameters {
+  real<lower=0> e;
+  real<lower=0> b;
+  e = exp(log_e);
+  b = exp(log_b);
+}
+
+model {  
+  real psurv[n];
+  
+  for (i in 1:n){
+    psurv[i] = 1/(1+(conc[i]/e)^b);
+  }
+
+  log_e ~ uniform(log(1), log(1000));
+  log_b ~ student_t(2, 0, 2);
+  Nsurv ~ binomial(N0, psurv);
+}
+
+"
+stan_fake <- stan(model_code = fakemodel, data = fakedata, iter=4000)
+stan_fake
+pos_fake = as.data.frame(stan_fake)
+#write.csv(file = 'postfake2.csv', pos_fake)
+#######Fake Data 3###########################################
+N_ = mayfly_survival_data$N0
+c = mayfly_survival_data$conc
+esim = 45.3
+bsim = 1.44
+p_sim = rep(0, 99)
+Ns = rep(0, 99)
+for (i in 1:99){
+  p_sim[i] = 1/(1+(c[i]/esim)^bsim)
+  Ns[i] = rbinom(n=1, size=N_[i], prob=p_sim[i])
+}
+fakedata = list(n=length(c), Nsurv=Ns, N0=N_, conc=c)
+fakemodel = "
+data {
+  // Number of tanks
+  int n;
+  // Number of survivors after 96h
+  int Nsurv[n];
+  // Initial number of mayfly larvae
+  int N0[n];
+  // Concentration
+  real conc[n];
+}
+
+parameters {
+  real log_e;
+  real log_b;
+}
+
+transformed parameters {
+  real<lower=0> e;
+  real<lower=0> b;
+  e = exp(log_e);
+  b = exp(log_b);
+}
+
+model {  
+  real psurv[n];
+  
+  for (i in 1:n){
+    psurv[i] = 1/(1+(conc[i]/e)^b);
+  }
+
+  log_e ~ uniform(log(1), log(1000));
+  log_b ~ student_t(2, 0, 2);
+  Nsurv ~ binomial(N0, psurv);
+}
+
+"
+stan_fake <- stan(model_code = fakemodel, data = fakedata, iter=4000)
+stan_fake
+pos_fake = as.data.frame(stan_fake)
+#write.csv(file = 'postfake3.csv', pos_fake)
+#######Fake Data 4###########################################
+N_ = mayfly_survival_data$N0
+c = mayfly_survival_data$conc
+esim = 70.24
+bsim = 3.5
+p_sim = rep(0, 99)
+Ns = rep(0, 99)
+for (i in 1:99){
+  p_sim[i] = 1/(1+(c[i]/esim)^bsim)
+  Ns[i] = rbinom(n=1, size=N_[i], prob=p_sim[i])
+}
+fakedata = list(n=length(c), Nsurv=Ns, N0=N_, conc=c)
+fakemodel = "
+data {
+  // Number of tanks
+  int n;
+  // Number of survivors after 96h
+  int Nsurv[n];
+  // Initial number of mayfly larvae
+  int N0[n];
+  // Concentration
+  real conc[n];
+}
+
+parameters {
+  real log_e;
+  real log_b;
+}
+
+transformed parameters {
+  real<lower=0> e;
+  real<lower=0> b;
+  e = exp(log_e);
+  b = exp(log_b);
+}
+
+model {  
+  real psurv[n];
+  
+  for (i in 1:n){
+    psurv[i] = 1/(1+(conc[i]/e)^b);
+  }
+
+  log_e ~ uniform(log(1), log(1000));
+  log_b ~ student_t(2, 0, 2);
+  Nsurv ~ binomial(N0, psurv);
+}
+
+"
+stan_fake <- stan(model_code = fakemodel, data = fakedata, iter=4000)
+stan_fake
+pos_fake = as.data.frame(stan_fake)
+#write.csv(file = 'postfake4.csv', pos_fake)
+```
+
+
+
+
